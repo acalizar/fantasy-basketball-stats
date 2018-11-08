@@ -3,6 +3,7 @@ import ReactTable from "react-table";
 import 'react-table/react-table.css';
 import LeagueSettings from "../components/LeagueSettings.js";
 import CalcFantasyPoints from "../components/CalcFantasyPoints.js";
+import styled from "styled-components";
 const NBA = require("nba");
 /* 
    PerMode: Totals, PerGame
@@ -10,6 +11,7 @@ const NBA = require("nba");
    SeasonType: Playoffs, Regular Season
 */
 const nbaObj = NBA;
+console.log(NBA);
 /*
 NBA.stats.playerInfo({Season: "2018-19", PlayerID: "203932"}).then(function(playerInfo){
     console.log(playerInfo)
@@ -21,56 +23,65 @@ export class GetAllPlayers extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            nbaStats: [],
-            mapper: [],
-            leagueSettings: {fga: 2, fgm: 0, fta: 0, ftm: 0, fG3A: 0, fG3M: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0}
+            stats: [],
+            leagueSettings: {
+                season: ((new Date().getYear() - 100) + 2000) + "-" + ((new Date().getYear() - 100) + 1), //2018-19
+                stats:{fga: -.3, fgm: 2.3, fta: -.5, ftm: 1.3, fG3A: -.2, fG3M: 1.45, oreb: 1.5, dreb: 1, ast: 2, stl: 2.5, blk: 2.5, tov: -1.5}
+            }
         };
     }
 
     componentDidMount() {
-        
-        const leagSet = this.state.leagueSettings;
-
-        NBA.stats.playerStats({ Season: "2018-19", SeasonType: "Regular Season", PerMode: "PerGame" }).then((playerInfo) => {
-            let nbaStats = playerInfo.leagueDashPlayerStats;
-            this.setState({ "nbaStats": nbaStats });
-
-            const mappedObj = [];
-            this.state.nbaStats.map((player, index) => { mappedObj[index] = { ...player, 
-                    fpnt: <CalcFantasyPoints columns={leagSet} player={player} /> 
-                } 
-            });
-            
-            this.setState({ "mapper": mappedObj });
-
+        NBA.stats.playerStats({ Season: this.state.leagueSettings.season, SeasonType: "Regular Season", PerMode: "PerGame" }).then((playerInfo) => {
+            const nbaStats = playerInfo.leagueDashPlayerStats;
+            this.setState({ "stats": nbaStats });
         }).catch((error) => console.log(error));
-
-
     }
-    settingChange = (e) => {
-        const settings = this.state.leagueSettings;
+    settingChange = type => (e) => {
+        const settings = type != undefined ? this.state.leagueSettings[type] : this.state.leagueSettings;
         settings[e.target.name] = e.target.value;
-
         this.forceUpdate();
-        
+
+        NBA.stats.playerStats({ Season: this.state.leagueSettings.season, SeasonType: "Regular Season", PerMode: "PerGame" }).then((playerInfo) => {
+            const nbaStats = playerInfo.leagueDashPlayerStats;
+            this.setState({ "stats": nbaStats });
+        }).catch((error) => console.log(error));
     }
 
     render() {
+        function calc(stats, settings){
+            let fantasyPoints = 0.0;
+            for(let val in settings){
+                fantasyPoints += (settings[val] * stats[val]);
+            }
+            return (Math.floor(fantasyPoints * 10 ) / 10);
+        }
+
+        const {stats, leagueSettings} = this.state;
         
-        const playerData = this.state.mapper;
-        //const leagSet = this.state.leagueSettings;    
+        const playerData = Object.entries(stats).map(
+            ([key, value]) => {
+              return {
+                ...stats[key],
+                fpnt: calc(stats[key], leagueSettings.stats)
+              };
+            }
+          );
+
         const data = playerData;
-
         const columns = [
-
             {
                 Header: 'FTRank',
                 accessor: 'nbaFantasyPtsRank',
-                Cell: props => <span className='number'>{props.value}</span> // Custom cell components!
+                Cell: props => <span className='number'>{props.value}</span>,
+                defaultSortDesc: false
             },
             {
-                Header: 'Players',
-                accessor: 'playerName' // String-based value accessors!
+                Header: 'Player',
+                accessor: 'playerName',
+                filterable: true,
+                filterMethod: (filter, row) => row[filter.id].toLowerCase().includes(filter.value.toLowerCase()),
+                defaultSortDesc: false
             },
             /*{
                 Header: 'Position',
@@ -78,7 +89,10 @@ export class GetAllPlayers extends React.Component {
             },*/
             {
                 Header: 'Team',
-                accessor: 'teamAbbreviation' // String-based value accessors!
+                accessor: 'teamAbbreviation',
+                filterable: true,
+                filterMethod: (filter, row) => row[filter.id].toLowerCase().includes(filter.value.toLowerCase()),
+                defaultSortDesc: false
             },
             {
                 Header: 'Fantasy PT',
@@ -86,7 +100,12 @@ export class GetAllPlayers extends React.Component {
                 Cell: props => <span className='number'>{props.value}</span>
             },
             {
-                Header: 'Min',
+                Header: 'GP',
+                accessor: 'gp',
+                Cell: props => <span className='number'>{props.value}</span>
+            },
+            {
+                Header: 'MIN',
                 accessor: 'min',
                 Cell: props => <span className='number'>{props.value}</span>
             },
@@ -141,30 +160,41 @@ export class GetAllPlayers extends React.Component {
             }
         ]
         return (
-            <div className="row">
-                <div className="col-md-2">
-               
-                    <LeagueSettings key={this.state.leagueSettings} settingChange={this.settingChange} columns={this.state.leagueSettings} />
+            <Wrapper>
+                <div className="row">
+                    <div className="col-md-4">
+                        <LeagueSettings settingChange={this.settingChange} leagueSettings={this.state.leagueSettings} />
+                    </div>
+                    <div className="col-md-8 main-table">
+                        <ReactTable
+                            data={data}
+                            //resolveData={data => data.map(row => row)}
+                            columns={columns}
+                            pageSizeOptions={[10, 15, 25, 50, 100]}
+                            defaultSortDesc={true}
+                            defaultSorted={[
+                                {
+                                    id: "fpnt",
+                                    desc: "false"
+                                }
+                            ]}
+                        />
+                        {nbaObj.players.length} Players
+                    </div>
                 </div>
-                <div className="col-md-10">
-
-                    <ReactTable
-                        data={data}
-                        //resolveData={data => data.map(row => row)}
-                        columns={columns}
-                        defaultSorted={[
-                            {
-                                id: "ftrank"
-                            }
-                        ]}
-                    />
-
-                    {nbaObj.players.length} Players
-                </div>
-            </div>
+            </Wrapper>
         )
     }
 };
+const Wrapper = styled.div`
+    .main-table input{
+        text-align: center;
+    }
+    
+
+        
+
+`
 export default GetAllPlayers;
 
 

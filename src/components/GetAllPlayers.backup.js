@@ -17,81 +17,60 @@ NBA.stats.playerInfo({Season: "2018-19", PlayerID: "203932"}).then(function(play
 */
 
 export class GetAllPlayers extends React.Component {
+    
     constructor(props) {
         super(props);
         this.state = {
             nbaStats: [],
-            mapper: []
+            mapper: [],
+            leagueSettings: {fga: 2, fgm: 0, fta: 0, ftm: 0, fG3A: 0, fG3M: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0}
         };
     }
 
     componentDidMount() {
-        NBA.stats.playerStats({ Season: "2018-19", SeasonType: "Regular Season", PerMode: "PerGame" }).then((playerInfo) => this.setState({ "nbaStats": playerInfo.leagueDashPlayerStats })).catch((error) => console.log(error));
+        
+        const leagSet = this.state.leagueSettings;
+
+        NBA.stats.playerStats({ Season: "2018-19", SeasonType: "Regular Season", PerMode: "PerGame" }).then((playerInfo) => {
+            const nbaStats = playerInfo.leagueDashPlayerStats;
+            this.setState({ "stats": nbaStats });
+
+            const mappedObj = [];
+            this.state.nbaStats.map((player, index) => { mappedObj[index] = { ...player, 
+                    fpnt: <CalcFantasyPoints columns={leagSet} player={player} /> 
+                } 
+            });
+            
+            this.setState({ "mapper": mappedObj });
+
+        }).catch((error) => console.log(error));
+
 
     }
-    
-    handleChange = (e) => {
-        this.setState({
-            [e.target.name]:e.target.value
-        });
+    settingChange = (e) => {
+        const settings = this.state.leagueSettings;
+        settings[e.target.name] = e.target.value;
+
+        this.forceUpdate();
+        
     }
 
-    render() {   
+    render() {
         
-        const leagueSettings = {
-            fga: this.state.fga || 0, 
-            fgm: this.state.fgm || 0, 
-            fta: this.state.fta || 0, 
-            ftm: this.state.ftm || 0, 
-            fG3A: this.state.fg3a || 0, 
-            fG3M: this.state.fg3m || 0, 
-            oreb: this.state.oreb || 0, 
-            dreb: this.state.dreb || 0, 
-            ast: this.state.ast || 0, 
-            stl: this.state.st || 0, 
-            blk: this.state.blk || 0, 
-            tov: this.state.to || 0
-        };
-        
-
-        const mapper = [];
-        const playerData = JSON.parse(JSON.stringify(this.state.nbaStats));
-        console.log(playerData)
-
-        playerData.map((player) => mapper.push({
-            ftrank: player.nbaFantasyPtsRank,
-            players: player.playerName,
-            pos: player.pos,
-            team: player.teamAbbreviation,
-            fpt: <CalcFantasyPoints leagueSettings={leagueSettings} player={player} />,
-            min: player.min,
-            fga: player.fga,
-            fgm: player.fgm,
-            fta: player.fta,
-            ftm: player.ftm,
-            fg3a: player.fG3A,
-            fg3m: player.fG3M,
-            oreb: player.oreb,
-            dreb: player.dreb,
-            ast: player.ast,
-            st: player.stl,
-            blk: player.blk,
-            to: player.tov
-        }));
-
-
-        const data = mapper;
+        const playerData = this.state.mapper;
+        //const leagSet = this.state.leagueSettings;    
+        const data = playerData;
 
         const columns = [
 
             {
                 Header: 'FTRank',
-                accessor: 'ftrank',
+                accessor: 'nbaFantasyPtsRank',
                 Cell: props => <span className='number'>{props.value}</span> // Custom cell components!
             },
             {
                 Header: 'Players',
-                accessor: 'players' // String-based value accessors!
+                accessor: 'playerName' // String-based value accessors!
             },
             /*{
                 Header: 'Position',
@@ -99,11 +78,11 @@ export class GetAllPlayers extends React.Component {
             },*/
             {
                 Header: 'Team',
-                accessor: 'team' // String-based value accessors!
+                accessor: 'teamAbbreviation' // String-based value accessors!
             },
             {
                 Header: 'Fantasy PT',
-                accessor: 'fpt',
+                accessor: 'fpnt',
                 Cell: props => <span className='number'>{props.value}</span>
             },
             {
@@ -129,11 +108,11 @@ export class GetAllPlayers extends React.Component {
                 Cell: props => <span className='number'>{props.value}</span>
             }, {
                 Header: '3PTA',
-                accessor: 'fg3a',
+                accessor: 'fG3A',
                 Cell: props => <span className='number'>{props.value}</span>
             }, {
                 Header: '3PTM',
-                accessor: 'fg3m',
+                accessor: 'fG3M',
                 Cell: props => <span className='number'>{props.value}</span>
             }, {
                 Header: 'OREB',
@@ -149,7 +128,7 @@ export class GetAllPlayers extends React.Component {
                 Cell: props => <span className='number'>{props.value}</span>
             }, {
                 Header: 'ST',
-                accessor: 'st',
+                accessor: 'stl',
                 Cell: props => <span className='number'>{props.value}</span>
             }, {
                 Header: 'BLK',
@@ -157,26 +136,27 @@ export class GetAllPlayers extends React.Component {
                 Cell: props => <span className='number'>{props.value}</span>
             }, {
                 Header: 'TO',
-                accessor: 'to',
+                accessor: 'tov',
                 Cell: props => <span className='number'>{props.value}</span>
             }
         ]
         return (
             <div className="row">
                 <div className="col-md-2">
-                    <LeagueSettings handleChange={this.handleChange} columns={columns} />  
+               
+                    <LeagueSettings key={this.state.leagueSettings} settingChange={this.settingChange} columns={this.state.leagueSettings} />
                 </div>
                 <div className="col-md-10">
 
                     <ReactTable
                         data={data}
-                        columns={columns} 
-                        resolveData={data => data.map(row => row)}
+                        //resolveData={data => data.map(row => row)}
+                        columns={columns}
                         defaultSorted={[
                             {
-                              id: "ftrank"
+                                id: "ftrank"
                             }
-                          ]}
+                        ]}
                     />
 
                     {nbaObj.players.length} Players
@@ -189,6 +169,12 @@ export default GetAllPlayers;
 
 
         /*
+ {Object.keys(leagSet).map(function(keyName, keyIndex) {
+                    return keyName + " " + leagSet[keyName] + " "
+                })}
+
+
+
         data = [{
             name: 'Tanner Linsley',
             age: 26,

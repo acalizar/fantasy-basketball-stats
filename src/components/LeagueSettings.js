@@ -3,32 +3,40 @@ import styled from "styled-components";
 
 
 
-const LeagueSettings = ({ settingChange, columns}) => {
+const LeagueSettings = ({ settingChange, leagueSettings}) => {
 
-
+    const years = [
+        ((new Date().getYear() - 100) + 2000) + "-" + ((new Date().getYear() - 100) + 1),
+        ((new Date().getYear() - 101) + 2000) + "-" + ((new Date().getYear() - 101) + 1),
+        ((new Date().getYear() - 102) + 2000) + "-" + ((new Date().getYear() - 102) + 1),
+    ];  //2018-19
     
     return (
-      <Wrapper>
+      <Settings>
         <h3>League Settings</h3>
         <hr />
         <div className="fields">
-            {Object.keys(columns).map(function(keyName, keyIndex) {
-                return <label>{keyName.toUpperCase()}: <input type="number" name={keyName} value={columns[keyName]} onChange={settingChange}/></label> 
-            // use keyName to get current key's name
-            // and a[keyName] to get its value
+            <label>SEASON: 
+                <select name="season" value={leagueSettings.season} onChange={settingChange()}>
+                {years.map((index) => <option key={index} value={index}>{index}</option>)}
+                </select>
+            </label> 
+            {Object.keys(leagueSettings.stats).map(function(keyName, keyIndex) { 
+                return <label key={keyIndex}>{keyName.toUpperCase()}: <input type="number" name={keyName} value={leagueSettings.stats[keyName]} onChange={settingChange("stats")}/></label> 
             })}
            
         </div>
-    </Wrapper>
+    </Settings>
     )
 };
  //<button className="btn-warning" type="button" onClick={_handleClick()}>Update</button>
-const Wrapper = styled.div`
+const Settings = styled.div`
     &{
         padding:20px;
         background-color: #fff2ca;
         border: 1px solid #ededed;
     }
+  
     .fields{
         display: inline-block;
     }
@@ -38,16 +46,20 @@ const Wrapper = styled.div`
     label {
         text-align:right;
         font-weight: bold;
-        margin-right:10px;
+        margin: 0px 5px 10px;
         display: flow-root;
         justify-content: space-between;
     }
-    input{
-        width:50px;
-        text-align:center;
+    input, select{
+        width:90px;
+        border-radius: 0;
+        height: 30px;
+        text-align:right;
         margin-left: 10px;
     }
 
+    
+    
 `
 export default LeagueSettings;
 
