@@ -4,7 +4,7 @@ import 'react-table/react-table.css';
 import LeagueSettings from "../components/LeagueSettings.js";
 import CalcFantasyPoints from "../components/CalcFantasyPoints.js";
 import styled from "styled-components";
-import NBA from "nba"
+import NBA from "nba";
 //const NBA = require("nba");
 /* 
    PerMode: Totals, PerGame
