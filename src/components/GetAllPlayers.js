@@ -39,7 +39,10 @@ export class GetAllPlayers extends React.Component {
         }).catch((error) => console.log(error)); 
     }
     componentDidMount() {
-        this.getStats();
+        NBA.stats.playerStats({ Season: this.state.leagueSettings.season, SeasonType: "Regular Season", PerMode: this.state.leagueSettings.perMode }).then((playerInfo) => {
+            const nbaStats = playerInfo.leagueDashPlayerStats;
+            this.setState({ "stats": nbaStats });
+        }).catch((error) => console.log("nope", error)); 
     }
     settingChange = type => (e) => {
         const settings = type != undefined ? this.state.leagueSettings[type] : this.state.leagueSettings;
