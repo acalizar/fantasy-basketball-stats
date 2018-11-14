@@ -63,7 +63,7 @@ const Settings = styled.div`
         display: inline-block;
     }
     label {
-        font-size: .75em
+        font-size: .75em;
         text-align: left;
         font-weight: bold;
         margin: 0px 5px 10px;
