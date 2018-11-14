@@ -7,7 +7,7 @@ export class Footer extends React.Component {
             <Wrapper>
                 <div className="row">
                     <div className="col-sm-6 left">
-                        <p>NBA Predictions</p>
+                        <p>NBA Fantasy Stats</p>
                     </div>
                     <div className="col-sm-6 right">
                         <p>2018-2019</p>

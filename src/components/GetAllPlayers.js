@@ -25,45 +25,45 @@ export class GetAllPlayers extends React.Component {
         this.state = {
             stats: [],
             leagueSettings: {
+                perMode: "PerGame",
                 season: ((new Date().getYear() - 100) + 2000) + "-" + ((new Date().getYear() - 100) + 1), //2018-19
-                stats:{fga: -.3, fgm: 2.3, fta: -.5, ftm: 1.3, fG3A: -.2, fG3M: 1.45, oreb: 1.5, dreb: 1, ast: 2, stl: 2.5, blk: 2.5, tov: -1.5}
+                stats:{fga: -.3, fgm: 2.3, fta: -.5, ftm: 1.3, fG3A: -.2, fG3M: 1.45, oreb: 1.5, dreb: 1, ast: 2, stl: 2.5, blk: 2.5, tov: -1.5} //update stats from Yahoo
             }
         };
     }
-
-    componentDidMount() {
-        NBA.stats.playerStats({ Season: this.state.leagueSettings.season, SeasonType: "Regular Season", PerMode: "PerGame" }).then((playerInfo) => {
+    getStats = () => {
+        NBA.stats.playerStats({ Season: this.state.leagueSettings.season, SeasonType: "Regular Season", PerMode: this.state.leagueSettings.perMode }).then((playerInfo) => {
             const nbaStats = playerInfo.leagueDashPlayerStats;
             this.setState({ "stats": nbaStats });
-        }).catch((error) => console.log(error));
+        }).catch((error) => console.log(error)); 
+    }
+    componentDidMount() {
+        this.getStats();
     }
     settingChange = type => (e) => {
         const settings = type != undefined ? this.state.leagueSettings[type] : this.state.leagueSettings;
+
         settings[e.target.name] = e.target.value;
         this.forceUpdate();
-
-        NBA.stats.playerStats({ Season: this.state.leagueSettings.season, SeasonType: "Regular Season", PerMode: "PerGame" }).then((playerInfo) => {
-            const nbaStats = playerInfo.leagueDashPlayerStats;
-            this.setState({ "stats": nbaStats });
-        }).catch((error) => console.log(error));
+        this.getStats();
     }
 
+    calc = (stats, settings) => {
+        const fantasyPoints = Object.entries(settings).reduce((total, [key,index]) => {
+            return total + (settings[key] * stats[key]);
+          }, 0.0)
+        return (Math.round(fantasyPoints * 10 ) / 10);
+    }
+    
     render() {
-        function calc(stats, settings){
-            let fantasyPoints = 0.0;
-            for(let val in settings){
-                fantasyPoints += (settings[val] * stats[val]);
-            }
-            return (Math.floor(fantasyPoints * 10 ) / 10);
-        }
-
         const {stats, leagueSettings} = this.state;
         
         const playerData = Object.entries(stats).map(
             ([key, value]) => {
               return {
                 ...stats[key],
-                fpnt: calc(stats[key], leagueSettings.stats)
+                index: key,
+                fpnt: this.calc(stats[key], leagueSettings.stats)
               };
             }
           );
@@ -107,7 +107,7 @@ export class GetAllPlayers extends React.Component {
             {
                 Header: 'MIN',
                 accessor: 'min',
-                Cell: props => <span className='number'>{props.value}</span>
+                Cell: props => <span className='number'>{Math.round(props.value)}</span>
             },
             {
                 Header: 'FGA',
@@ -161,16 +161,17 @@ export class GetAllPlayers extends React.Component {
         ]
         return (
             <Wrapper>
-                <div className="row">
-                    <div className="col-md-4">
+                <div >
+                    <div>
                         <LeagueSettings settingChange={this.settingChange} leagueSettings={this.state.leagueSettings} />
                     </div>
-                    <div className="col-md-8 main-table">
+                    <div className="main-table">
                         <ReactTable
                             data={data}
                             //resolveData={data => data.map(row => row)}
                             columns={columns}
                             pageSizeOptions={[10, 15, 25, 50, 100]}
+                            defaultPageSize={10}
                             defaultSortDesc={true}
                             defaultSorted={[
                                 {
@@ -179,8 +180,8 @@ export class GetAllPlayers extends React.Component {
                                 }
                             ]}
                         />
-                        {nbaObj.players.length} Players
                     </div>
+                     {nbaObj.players.length} Players
                 </div>
             </Wrapper>
         )
@@ -189,6 +190,11 @@ export class GetAllPlayers extends React.Component {
 const Wrapper = styled.div`
     .main-table input{
         text-align: center;
+        
+    }
+    .main-table{
+        width: 100%;
+        margin: 10px auto;
     }
     
 
@@ -196,45 +202,3 @@ const Wrapper = styled.div`
 
 `
 export default GetAllPlayers;
-
-
-        /*
- {Object.keys(leagSet).map(function(keyName, keyIndex) {
-                    return keyName + " " + leagSet[keyName] + " "
-                })}
-
-
-
-        data = [{
-            name: 'Tanner Linsley',
-            age: 26,
-            friend: {
-              name: 'Jason Maurer',
-              age: 23,
-            }
-        }];
-        const columns = [{
-            Header: 'Name',
-            accessor: 'name' // String-based value accessors!
-          }, {
-            Header: 'Age',
-            accessor: 'age',
-            Cell: props => <span className='number'>{props.value}</span> // Custom cell components!
-          }, {
-            id: 'friendName', // Required because our accessor is not a string
-            Header: 'Friend Name',
-            accessor: d => d.friend.name // Custom value accessors!
-          }, {
-            Header: props => <span>Friend Age</span>, // Custom header components!
-            accessor: 'friend.age'
-          }]
-            <> 
-            
-            {curry.firstName}
-            
-            <ReactTable
-                data={data}
-                columns={columns}
-            />
-            </>
-        );*/
