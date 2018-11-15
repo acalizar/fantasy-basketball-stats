@@ -2,7 +2,6 @@ import React from 'react';
 import ReactTable from "react-table";
 import 'react-table/react-table.css';
 import LeagueSettings from "../components/LeagueSettings.js";
-import CalcFantasyPoints from "../components/CalcFantasyPoints.js";
 import styled from "styled-components";
 import NBA from "nba";
 //const NBA = require("nba");
@@ -45,7 +44,7 @@ export class GetAllPlayers extends React.Component {
         }).catch((error) => console.log("nope", error)); 
     }
     settingChange = type => (e) => {
-        const settings = type != undefined ? this.state.leagueSettings[type] : this.state.leagueSettings;
+        const settings = type !== undefined ? this.state.leagueSettings[type] : this.state.leagueSettings;
 
         settings[e.target.name] = e.target.value;
         this.forceUpdate();
