@@ -31,7 +31,7 @@ export class YahooOauth extends React.Component {
         let yh = hello('yahoo');
         yh.init(
             {yahoo: 'dj0yJmk9dzNRc3JPcVJWWVQzJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTA3'},
-            {redirect_uri: 'https://ant-fbb.netlify.com/auth'} //'http://127.0.0.1:3000/auth'}
+            {redirect_uri: 'https://dev--ant-fbb.netlify.com/auth'} //'http://127.0.0.1:3000/auth'}
         )/*
         yh.on('auth.login', function (auth) {
             // Call user information, for the given network
