@@ -59,10 +59,9 @@ export class YahooOauth extends React.Component {
     }
 };
 const Wrapper = styled.div`
-    &{  
+    &{  text-align:right; 
         .btn{
             transition: ease-in-out all .2s;
-            display: none;
         }
         .btn:hover{
             background-color: #ededed;
